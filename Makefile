@@ -1,6 +1,5 @@
-#This is the makefile for one.c
 Object=Astar
-Temp=  HashTable.o
+SRC=src
 
 
 CC=mpicc
@@ -9,14 +8,16 @@ INCLUDE= -I/home/junli/roomy-install/include
 LIB= -L/home/junli/roomy-install/lib  /home/junli/roomy-install/lib/libroomy.a
 
 
-$(Object):$(Temp)
-	$(CC) $^  -o $@  $(INCLUDE) $(LIB) $(LDFLAGS)
+_Astar=Astar.o
+Astar=$(patsubst %, $(SRC)/%, $(_Astar))
 
-HashTable.o : HashTable.c  
+%.o: %.c  
 	$(CC) $(INCLUDE) -c $<
 
-#HashTable2.o : HashTable2.c
-#	$(CC) $(INCLUDE) -c $<
+
+$(Object):$(Astar)
+	$(CC) $^  -o $@  $(INCLUDE) $(LIB) $(LDFLAGS)
+
 clean:
-	rm -f  $(Object)
+	rm -f  $(SRC)/$(Temp)
 
