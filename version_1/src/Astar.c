@@ -22,7 +22,6 @@ typedef struct{
 	uint64 father;
 }Node;
 
-
 int WeGetIt=0;
 
 // Return the identity permutation in the argument out.
@@ -99,42 +98,6 @@ void printPerm(uint64 in)
 	for(i=0; i<permLen;i++)
 		printf("%u",a[i]);
 }
-
-
-
-
-void genOneState(Perm in, int i, int j, Perm out)
-{
-	int l;
-	for(l=0; l< permLen; l++)
-		out[l] = in[l];
-
-	if( (j<0)||(j>8) ) return;
-	if(  ((i==2)&&(j==3))||((i==3)&&(j==2))||
-		((i==5)&&(j==6))||((i==6)&&(j==5)) )
-		 return;
-
-	Elt temp;
-	temp = out[i];
-	out[i] = out[j];
-	out[j] = temp;
-}
-
-void generate(Perm in, Perm out[])
-{
-	uint64 position;
-	int i;
-
-	for(i=permLen-1; i>=0; i--)
-		if (in[i]==0)
-			position=i;
-
-	int nbrsPosition[] = { position-1, position+1, position-3, position+3 };
-
-	for(i=0; i<nbrsNum; i++)
-		genOneState(in, position, nbrsPosition[i] , out[i]);
-}
-
 
 /************************************************************************
 mapDist
@@ -397,7 +360,7 @@ void showPath()
 		stack[size]=tempAsPassedVal;
 	}
 
-	printf("\n\nPath:\n");
+	printf("Path:%lli steps.\n",size);
 	int i;
 	for (i=0; i<size; i++)
 	{  
@@ -457,9 +420,9 @@ void genNexLevHT()
 /******************************************************************************
 Astar
 *******************************************************************************/
-void Astar(Perm ST, Perm Dest, uint64 popNum)
+void Astar(Perm ST, Perm Dest, uint64 * popNum)
 {
-	
+	uint64 step= *popNum;
 	permToState(ST, &start);
 	permToState(Dest, &dest);
 
@@ -480,11 +443,11 @@ void Astar(Perm ST, Perm Dest, uint64 popNum)
 
 	//	printAll();
 		
-		popHT(openHT,popNum);
+		popHT(openHT,step);
 	//	printAll();
 		genNexLevHT();
 	//	printAll();
-		printf("Lev%lli: %lli nodes.\n",Lev,RoomyHashTable_size(curLevHT));
+	//	printf("Lev%lli: %lli nodes.\n",Lev,RoomyHashTable_size(curLevHT));
 		/****** possible we get it*****/
 		if(WeGetIt==1)
 		{
@@ -494,6 +457,7 @@ void Astar(Perm ST, Perm Dest, uint64 popNum)
 		}
 		else
 		{
+			printf("Lev%lli: %lli nodes.\n",Lev,RoomyHashTable_size(curLevHT));
 			updateNexLevHT();	
 	//		printAll();
 	 		addNexLevToOpen();
@@ -503,7 +467,7 @@ void Astar(Perm ST, Perm Dest, uint64 popNum)
 		}	
 	}
 
-	printf("Steps:%lli\n", Lev-1);
+	printf("Depth:%lli\n", Lev-1);
 	showPath();	
 }
 /********************************************************************

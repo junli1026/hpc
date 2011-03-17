@@ -2,8 +2,8 @@
 #include "RoomyArray.h"
 #include "RoomyList.h"
 #include "RoomyHashTable.h"
-
 #include "Astar.h"
+#include "RoomyGraph.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -22,119 +22,7 @@ typedef struct{
 	uint64 father;
 }Node;
 
-
 int WeGetIt=0;
-
-// Return the identity permutation in the argument out.
-void getIdentPerm(Perm out) {
-    int i;
-    for(i = 0; i < permLen; i++)
-        out[i] = i;
-}
-
-// Swap elements i and j of permutation p.
-void swap(Perm p, Elt i, Elt j) {
-    Elt tmp = p[i];
-    p[i] = p[j];
-    p[j] = tmp;
-}
-
-// Copy permutation from to permutation to.
-void copyPerm(Perm to, Perm from) {
-    memcpy(to, from, permLen * sizeof(Elt));
-}
-
-// Reverse the first k elements of the given permutation.
-void revPrefix(Perm in, int k, Perm out) {
-    copyPerm(out, in);
-    int i;
-    for(i = 0; i < k/2; i++) {
-        swap(out, k-i-1, i);
-    }
-}
-
-void invertPerm(Perm p, Perm out) {
-    int i;
-    for(i=0; i<permLen; i++)
-        out[p[i]] = i;
-}
-
-uint64 rankRecur(Elt n, Perm p, Perm r) {
-    if(n == 1) return 0;
-    Elt s = p[n-1];
-    swap(p, n-1, r[n-1]);
-    swap(r, s, n-1);
-    return s + n * rankRecur(n-1, p, r);
-}
-
-void unrankRecur(Elt n, uint64 r, Perm p) {
-    if(n > 0) {
-        swap(p, n-1, r%n);
-        unrankRecur(n-1, r/n, p);
-    }
-
-}
-
-void permToState( Perm in, uint64 *out)
-{
-	Perm p2;
-    	copyPerm(p2, in);
-    	Perm r;
-    	invertPerm(p2, r);
-    	*(uint64*)out = rankRecur(permLen, p2, r);
-}
-
-void stateToPerm(uint64 * in,  Perm out)
-{
-	uint64 r = *(uint64*)in;
-	getIdentPerm(out);
-    	unrankRecur(permLen, r, out);
-}
-
-void printPerm(uint64 in)
-{
-	Perm a;
-	stateToPerm(&in, a);
-	int i;
-	for(i=0; i<permLen;i++)
-		printf("%u",a[i]);
-}
-
-
-
-
-void genOneState(Perm in, int i, int j, Perm out)
-{
-	int l;
-	for(l=0; l< permLen; l++)
-		out[l] = in[l];
-
-	if( (j<0)||(j>8) ) return;
-	if(  ((i==2)&&(j==3))||((i==3)&&(j==2))||
-		((i==5)&&(j==6))||((i==6)&&(j==5)) )
-		 return;
-
-	Elt temp;
-	temp = out[i];
-	out[i] = out[j];
-	out[j] = temp;
-}
-
-void generate(Perm in, Perm out[])
-{
-	uint64 position;
-	int i;
-
-	for(i=permLen-1; i>=0; i--)
-		if (in[i]==0)
-			position=i;
-
-	int nbrsPosition[] = { position-1, position+1, position-3, position+3 };
-
-	for(i=0; i<nbrsNum; i++)
-		genOneState(in, position, nbrsPosition[i] , out[i]);
-}
-
 
 /************************************************************************
 mapDist
@@ -199,7 +87,6 @@ void endPushHT(void *rht)
 {
 	RoomyHashTable_sync(rht);
 }
-
 
 /***********************************************************************
 pop out the state/dist whose dist is between min and max. 
@@ -424,13 +311,14 @@ void genNBRS(void * key, void * val)
 
 	int i;
 	Perm in;
-	Perm out[nbrsNum];
 	uint64 state[nbrsNum];
 	Node nbrNode[nbrsNum];
 
 	stateToPerm((uint64*)key, in);
-	generate(in, out);	
-		
+	
+    //generate(in, out);	
+    Children *out;
+	out = RoomyGraph_getChildren(RoomyGraph *g, uint64 in);
 	for(i=0; i<nbrsNum; i++)
 	{
 		permToState(out[i],&state[i]);

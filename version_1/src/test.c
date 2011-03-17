@@ -1,6 +1,5 @@
 #include "roomy.h"
 #include "RoomyHashTable.h"
-
 #include "Astar.h"
 
 
@@ -21,6 +20,74 @@ uint64 hFunc(Perm state)
 			h++;
 	return h;
 }
+
+void genOneState(Perm in, int i, int j, Perm out)
+{
+	int l;
+	for(l=0; l< permLen; l++)
+		out[l] = in[l];
+
+	if( (j<0)||(j>8) ) return;
+	if(  ((i==2)&&(j==3))||((i==3)&&(j==2))||
+		((i==5)&&(j==6))||((i==6)&&(j==5)) )
+		 return;
+
+	Elt temp;
+	temp = out[i];
+	out[i] = out[j];
+	out[j] = temp;
+}
+
+void generate(Perm in, Perm out[])
+{
+	uint64 position;
+	int i;
+
+	for(i=permLen-1; i>=0; i--)
+		if (in[i]==0)
+			position=i;
+
+	int nbrsPosition[] = { position-1, position+1, position-3, position+3 };
+
+	for(i=0; i<nbrsNum; i++)
+		genOneState(in, position, nbrsPosition[i] , out[i]);
+}
+
+int solution(Perm a, Perm b)
+{
+	uint64 aa[permLen];
+	uint64 bb[permLen];
+	uint64 aSum=0;
+	uint64 bSum=0;
+	uint64 i,j;
+	for (i=0; i<permLen;i++)
+	{
+		aa[i]=0;
+		bb[i]=0;
+	}
+	for(i=0; i<permLen; i++)
+	{
+		for(j=0;j<i;j++)
+		{	
+			if( (a[j]>a[i])&&(a[i]!=0) )	
+				aa[i]++;
+			if( (b[j]>b[i])&&(b[i]!=0) )
+				bb[i]++;
+		}
+	} 
+
+	for(i=0; i<permLen;  i++)
+	{
+		aSum = aSum+aa[i];
+		bSum = bSum+bb[i];
+	}
+//	printf("%lli , %lli\n",aSum, bSum);
+	if( ((0==aSum%2)&&(0==bSum%2))|| 
+		( (1==aSum%2)&&(1==bSum%2) ))
+		return 1;
+	else return 0;
+	
+}	
 
 int main(int argc, char **argv )
 {
@@ -43,9 +110,14 @@ int main(int argc, char **argv )
 	c[3]=4;		
 	c[4]=5;		
 	c[5]=6;		
-	c[6]=7;		
+	c[6]=8;		
 	c[7]=0;		
-	c[8]=8;		
-	Astar(a, b,5);	
+	c[8]=7;	
+
+	uint64 x=1;	
+	if(1==solution(a,b))	
+		Astar(a, b, &x);	
+	else
+		 printf("No solution.\n");
 	Roomy_finalize();
 }

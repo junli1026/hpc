@@ -1,16 +1,21 @@
 #include "roomy.h"
 #include "RoomyHashTable.h"
-
 #include "Astar.h"
-
 
 uint64 gFunc(Perm a)
 {
+//add your code here
+
+/*
 	return Lev;
+*/
 }
 
 uint64 hFunc(Perm state)
 {
+//add your code here
+
+/*
 	uint64 d=dest;
 	Perm des;
 	stateToPerm(&d, des);
@@ -20,6 +25,7 @@ uint64 hFunc(Perm state)
 		if(des[i]!=state[i])
 			h++;
 	return h;
+*/
 }
 
 int main(int argc, char **argv )
