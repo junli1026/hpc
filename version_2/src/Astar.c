@@ -2,9 +2,9 @@
 #include "RoomyArray.h"
 #include "RoomyList.h"
 #include "RoomyHashTable.h"
+
 #include "Astar.h"
 #include "RoomyGraph.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -16,18 +16,15 @@ RoomyHashTable *closeHT;
 RoomyHashTable *curLevHT;
 RoomyHashTable *nexLevHT;
 RoomyHashTable *pathHT;
+RoomyGraph *g;
 
 typedef struct{
 	uint64 dist;
 	uint64 father;
 }Node;
 
-int WeGetIt=0;
-
-/************************************************************************
-mapDist
-*************************************************************************/
-uint64 mapDist( Perm state )
+int WeGetIt=0; 
+uint64 mapDist( uint64 state )
 {
 	uint64 dist = gFunc(state) + hFunc(state);
 	return dist;
@@ -88,11 +85,11 @@ void endPushHT(void *rht)
 	RoomyHashTable_sync(rht);
 }
 
+
 /***********************************************************************
 pop out the state/dist whose dist is between min and max. 
-kept in curLevHT
+:kept in curLevHT
 ************************************************************************/
-
 uint64 count[MAX];
 uint64 rangeLow;
 uint64 rangeUp;
@@ -141,7 +138,6 @@ void pop(void *key, void *val)
 	uint64 state = *(uint64*)key;
 	uint64 distance = (*(Node*)val).dist;
 	
-	
 	if((distance >= rangeLow )&&(distance <= rangeUp))
 	{
 		pushHT(curLevHT,key,val);
@@ -169,11 +165,6 @@ print out an HT
 void print(void *key, void *val)
 {
  	printf("state:%10lli  perm:",*(uint64*)key);
-	int i;
-	Perm temp;
-	stateToPerm((uint64*)key, temp);
-	for(i=0; i<permLen; i++)
-		printf("%u",temp[i]);
 	printf("  dist:%10lli", (*(Node*)val).dist );
 	printf("  father:%10lli\n", (*(Node*)val).father );
 }
@@ -284,51 +275,49 @@ void showPath()
 		stack[size]=tempAsPassedVal;
 	}
 
-	printf("\n\nPath:\n");
+	printf("Path:%lli steps.\n",size);
 	int i;
 	for (i=0; i<size; i++)
-	{  
-		printPerm(stack[size-i]);
-		printf("\n");
-	}
-	printPerm(dest);
-	printf("\n");
+		printf("%lli\n",stack[size-i]);
+		
+	printf("%lli\n",dest);
 }
 /************************************************************************
 genetrate the nexLevHT
 *************************************************************************/
+void childrenFunction(void *key, void *val, void * passedVal)
+{
+	uint64* array = (uint64*)val;
+//	printf("father:%lli\n", parent );
+	uint64 i;
+	if(0 != array[0])
+	{	
+		Node node[array[0]];
+		for(i=1; i<=array[0]; i++)
+			if( array[i]!=(*(uint64*)key) )
+			{
+				node[i].father = *(uint64*)key;
+				node[i].dist = mapDist(array[i]);
+				pushHT(nexLevHT,&array[i], &node[i]);
+			}
+	}
+}	
+
 void genNBRS(void * key, void * val)
 {
 	pushHT(closeHT,key,val);
-//	printf("%lli into closeHT.\n",*(uint64*)key);
 
 	if ((*(uint64*)key)==dest)
 	{
-			WeGetIt = 1;
-			printf("\n**********Notice**********\nWe got it !!!!\n");
-			printf("**********End*************\n");
+		WeGetIt = 1;
+		printf("\n**********Notice**********\nWe got it !!!!\n");
+		printf("**********End*************\n");
 	}
 
-	int i;
-	Perm in;
-	uint64 state[nbrsNum];
-	Node nbrNode[nbrsNum];
-
-	stateToPerm((uint64*)key, in);
+	uint64 parent = *(uint64*)key;
 	
-    //generate(in, out);	
-    Children *out;
-	out = RoomyGraph_getChildren(RoomyGraph *g, uint64 in);
-	for(i=0; i<nbrsNum; i++)
-	{
-		permToState(out[i],&state[i]);
-		(nbrNode[i]).dist = mapDist(out[i]) ;
-		(nbrNode[i]).father = *(uint64*)key;
-		if( state[i]!=(*(uint64*)key) )
-		{
-			pushHT(nexLevHT,&state[i], &nbrNode[i]);
-		}
-	}
+	RoomyHashTable_access(g->graph, &parent, NULL, childrenFunction); 
+	
 }
 
 void genNexLevHT()
@@ -336,7 +325,10 @@ void genNexLevHT()
 	Lev++;
 	beginPushHT(closeHT);
 	beginPushHT(nexLevHT);
-	RoomyHashTable_map(curLevHT, genNBRS);	
+
+	RoomyHashTable_registerAccessFunc(g->graph, childrenFunction, 0);		RoomyHashTable_map(curLevHT, genNBRS);
+	RoomyHashTable_sync(g->graph);	
+
 	endPushHT(nexLevHT);
 	endPushHT(closeHT);
 }
@@ -345,122 +337,66 @@ void genNexLevHT()
 /******************************************************************************
 Astar
 *******************************************************************************/
-void Astar(Perm ST, Perm Dest, uint64 popNum)
+void Astar(RoomyGraph * temp, uint64 * a, uint64 * b, uint64 * popNum)
 {
-	
-	permToState(ST, &start);
-	permToState(Dest, &dest);
 
+	g=temp;	
+	start = *a;
+	dest = *b;
+	uint64 step= *popNum;
+	
 	Node d;
-	d.dist = mapDist(ST);
+	d.dist = mapDist(start);
 	d.father = 0;
+	
+	printf("start node: %lli\n", start);
+	printf("goal node: %lli\n", dest);
 
 	beginPushHT(openHT);
-		pushHT(openHT,&start,&d );
-	endPushHT(openHT);
+		pushHT(openHT,&start,&d);
+	endPushHT(openHT);	
 	
-	
-		
 	while(WeGetIt==0)
 	{
 		curLevHT = RoomyHashTable_make("curLevHT",sizeof(uint64),sizeof(Node),1000);
 		nexLevHT = RoomyHashTable_make("nexLevHT",sizeof(uint64),sizeof(Node),1000);
 
 	//	printAll();
-		
-		popHT(openHT,popNum);
+		popHT(openHT,step);
 	//	printAll();
 		genNexLevHT();
-	//	printAll();
-		printf("Lev%lli: %lli nodes.\n",Lev,RoomyHashTable_size(curLevHT));
+		printAll();
 		/****** possible we get it*****/
 		if(WeGetIt==1)
 		{
 			RoomyHashTable_destroy(nexLevHT);
 			setPath();
-	//		printAll();
+		//	printAll();
 		}
 		else
 		{
+			printf("Lev%lli: %lli nodes.\n",Lev,RoomyHashTable_size(curLevHT));
 			updateNexLevHT();	
-	//		printAll();
+		//	printAll();
 	 		addNexLevToOpen();
-	//		printAll();
+		//	printAll();
 			RoomyHashTable_destroy(curLevHT);
 			RoomyHashTable_destroy(nexLevHT);
 		}	
-	}
-
-	printf("Steps:%lli\n", Lev-1);
-	showPath();	
-}
-/********************************************************************
-test
-*********************************************************************/
-void testSet()
-{
-/*	uint64 size=N;
-	uint64 *array, *index;
-	array = (uint64*)malloc(size*sizeof(uint64));
-	index = (uint64*)malloc(size*sizeof(uint64));
-uint64 i;
-	for(i=0; i<size; i++)
-	{
-		index[i]=i;
-		array[i]=10+i;
+	/*		
+		if (0==RoomyHashTable_size(openHT));
+		{
+			printf("sorry, no solutoin!\n");
+			break;
+		}
+	*/
 	}
 	
-	beginPushHT(openHT);
-//	for(i=0; i<size; i++)
-//		pushHT(openHT,&index[i],&array[i]);
-	endPushHT(openHT);
-
-	free(array);
-	free(index);
-*/
-	Node a;
-	a.father =234;
-	a.dist=15;
-
-	beginPushHT(openHT);
-		pushHT(openHT,&start,&a);
-	endPushHT(openHT);
-
-	printAll(openHT);
-
-
-	popHT(openHT, 10 );
-	printAll();
-
-		
-	genNexLevHT();
-	printAll();
-
-	updateNexLevHT();
-	printAll();
-
-	addNexLevToOpen();	
-	printAll();
-
-}
-
-void testPopHT()
-{
-
-	Node a[10];
-	uint64 b[10];
-	uint64 i;
-	beginPushHT(openHT);
-	for (i=0; i<10; i++)
-	{
-		a[i].father=i;
-		a[i].dist=i;
-		b[i]=2*i;
-		pushHT(openHT,&b[i], &a[i]);
+	if(1==WeGetIt)
+	{	
+		printf("Depth:%lli\n", Lev-1);
+		showPath();	
 	}
-	endPushHT(openHT);
-	printAll();
-
-	popHT(openHT,2);
-	printAll();
+	RoomyHashTable_destroy(pathHT);
 }
+

@@ -6,7 +6,7 @@ LIB= -L/home/junli/roomy-install/lib  /home/junli/roomy-install/lib/libroomy.a
 
 Object=Astar
 SRC=src
-Temp= Astar.o test.o $(SRC)/Astar.h
+Temp= Astar.o test.o RoomyGraph.o $(SRC)/Astar.h $(SRC)/RoomyGraph.h
 
 %.o:$(SRC)/%.c 
 	$(CC) $(INCLUDE) -c $<
