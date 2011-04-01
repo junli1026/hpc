@@ -9,8 +9,8 @@ uint64 Lev;
 
 // user define here
 #define MIN 0
-#define MAX 100
-#define permLen 9
+#define MAX 400
+#define permLen 16 
 #define nbrsNum 4
 typedef uint8 Elt;
 typedef Elt Perm[permLen];

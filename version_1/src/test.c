@@ -21,7 +21,7 @@ uint64 hFunc(Perm state)
 	return h;
 }
 
-void genOneState(Perm in, int i, int j, Perm out)
+void genOneState_8(Perm in, int i, int j, Perm out)
 {
 	int l;
 	for(l=0; l< permLen; l++)
@@ -38,6 +38,24 @@ void genOneState(Perm in, int i, int j, Perm out)
 	out[j] = temp;
 }
 
+
+void genOneState_15(Perm in, int i, int j, Perm out)
+{
+	int l;
+	for(l=0; l< permLen; l++)
+		out[l] = in[l];
+
+	if( (j<0)||(j>15) ) return;
+	if(  ((i==3)&&(j==4))||((i==4)&&(j==3))||
+		((i==7)&&(j==8))||((i==8)&&(j==7))||
+		((i==11)&&(j==12))||((i==12)&&(j==11)) )
+		 return;
+
+	Elt temp;
+	temp = out[i];
+	out[i] = out[j];
+	out[j] = temp;
+}
 void generate(Perm in, Perm out[])
 {
 	uint64 position;
@@ -47,10 +65,10 @@ void generate(Perm in, Perm out[])
 		if (in[i]==0)
 			position=i;
 
-	int nbrsPosition[] = { position-1, position+1, position-3, position+3 };
+	int nbrsPosition[] = { position-1, position+1, position-4, position+4 };
 
 	for(i=0; i<nbrsNum; i++)
-		genOneState(in, position, nbrsPosition[i] , out[i]);
+		genOneState_15(in, position, nbrsPosition[i] , out[i]);
 }
 
 int solution(Perm a, Perm b)
@@ -93,29 +111,60 @@ int main(int argc, char **argv )
 {
 	Roomy_init(&argc, &argv);
 	initAllHT();
-	Perm a, b, c;
-	a[0]=1;		b[0]=4;
+	Perm a, b, c, d;
+	a[0]=1;		b[0]=14;
 	a[1]=2;		b[1]=0;
-	a[2]=3;		b[2]=7;
-	a[3]=4;		b[3]=8;
-	a[4]=5;		b[4]=2;
-	a[5]=6;		b[5]=5;
-	a[6]=7;		b[6]=3;
-	a[7]=8;		b[7]=6;
-	a[8]=0;		b[8]=1;
+	a[2]=3;		b[2]=15;
+	a[3]=4;		b[3]=13;
+	a[4]=5;		b[4]=12;
+	a[5]=6;		b[5]=11;
+	a[6]=7;		b[6]=10;
+	a[7]=8;		b[7]=9;
+	a[8]=9;		b[8]=8;
+	a[9]=10;	b[9]=7;
+	a[10]=11;	b[10]=6;
+	a[11]=12;	b[11]=5;
+	a[12]=13;	b[12]=4;
+	a[13]=14;	b[13]=3;
+	a[14]=15;	b[14]=2;
+	a[15]=0;	b[15]=1;
 
 	c[0]=1;		
 	c[1]=2;		
-	c[2]=3;		
+	c[2]=0;		
 	c[3]=4;		
 	c[4]=5;		
 	c[5]=6;		
-	c[6]=8;		
-	c[7]=0;		
-	c[8]=7;	
+	c[6]=3;		
+	c[7]=8;		
+	c[8]=9;
+	c[9]=10;
+	c[10]=7;
+	c[11]=11;
+	c[12]=13;
+	c[13]=14;
+	c[14]=15;
+	c[15]=12;
 
-	uint64 x=1;	
-	if(1==solution(a,b))	
+	d[0]=0;		
+	d[1]=2;		
+	d[2]=3;		
+	d[3]=4;		
+	d[4]=1;		
+	d[5]=5;		
+	d[6]=7;		
+	d[7]=8;		
+	d[8]=9;		
+	d[9]=6;
+	d[10]=10;
+	d[11]=11;
+	d[12]=13;
+	d[13]=14;
+	d[14]=15;	
+	d[15]=12;
+
+	uint64 x=40;	
+	if(0==solution(a,c))	
 		Astar(a, b, &x);	
 	else
 		 printf("No solution.\n");

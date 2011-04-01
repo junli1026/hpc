@@ -349,7 +349,7 @@ void accessShow(void *key, void * val, void * passedVal)
 void showPath()
 {
 	uint64 stack[Lev-1];
-	uint64 size=0; //size always <=Lev-1 .
+	uint64 size=0; //we always have size<=Lev-1 .
 	stack[size]=dest;
 	while ( stack[size]!=start )
 	{
@@ -464,11 +464,20 @@ void Astar(Perm ST, Perm Dest, uint64 * popNum)
 	//		printAll();
 			RoomyHashTable_destroy(curLevHT);
 			RoomyHashTable_destroy(nexLevHT);
-		}	
+		}
+		
+		if(0==RoomyHashTable_size(openHT))	
+		{
+			printf("Sorry, no solution.\n");
+			break;
+		}
 	}
-
-	printf("Depth:%lli\n", Lev-1);
-	showPath();	
+	if(1==WeGetIt)
+	{
+		printf("Depth:%lli\n", Lev-1);
+		showPath();	
+	}
+	RoomyHashTable_destroy(pathHT);
 }
 /********************************************************************
 test
